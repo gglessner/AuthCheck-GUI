@@ -1,4 +1,4 @@
-# AuthCheck - part of the HACKtiveMQ Suite
+# AuthCheck - part of the Ningu Framework
 # Copyright (C) 2025 Garland Glessner - gglessner@gmail.com
 #
 # This program is free software: you can redistribute it and/or modify
@@ -326,8 +326,12 @@ class TabContent(QWidget):
             
             label = QLabel(field_label + ":")
             
+            # Set minimum width for form fields (3x default width)
+            field_min_width = 400
+            
             if field_type == 'text':
                 widget = QLineEdit()
+                widget.setMinimumWidth(field_min_width)
                 if saved_value is not None:
                     widget.setText(str(saved_value))
                 elif field_default:
@@ -335,6 +339,7 @@ class TabContent(QWidget):
                     
             elif field_type == 'password':
                 widget = QLineEdit()
+                widget.setMinimumWidth(field_min_width)
                 widget.setEchoMode(QLineEdit.Password)
                 if saved_value is not None:
                     widget.setText(str(saved_value))
@@ -350,6 +355,7 @@ class TabContent(QWidget):
                     
             elif field_type == 'combo':
                 widget = QComboBox()
+                widget.setMinimumWidth(field_min_width)
                 widget.addItems(field_options)
                 if saved_value is not None and saved_value in field_options:
                     widget.setCurrentText(str(saved_value))
@@ -363,6 +369,7 @@ class TabContent(QWidget):
                 hlayout.setContentsMargins(0, 0, 0, 0)
                 
                 line_edit = QLineEdit()
+                line_edit.setMinimumWidth(field_min_width - 80)  # Account for Browse button
                 if saved_value is not None:
                     line_edit.setText(str(saved_value))
                 elif field_default:
@@ -383,6 +390,7 @@ class TabContent(QWidget):
                 
             elif field_type == 'readonly':
                 widget = QLineEdit()
+                widget.setMinimumWidth(field_min_width)
                 widget.setReadOnly(True)
                 widget.setStyleSheet("background-color: #f0f0f0; color: #666666;")
                 if field_default:

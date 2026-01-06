@@ -14,11 +14,12 @@ form_fields = [
      "port_toggle": "use_tls", "tls_port": "55443", "non_tls_port": "55555"},
     {"name": "vpn", "type": "text", "label": "Message VPN", "default": "default"},
     {"name": "use_tls", "type": "checkbox", "label": "Enable TLS", "default": True},
+    {"name": "verify_ssl", "type": "checkbox", "label": "Verify SSL Certificate"},
     {"name": "auth_type", "type": "combo", "label": "Authentication Type",
      "options": ["Basic", "Client Certificate", "Kerberos", "OAuth"]},
     {"name": "username", "type": "text", "label": "Username"},
     {"name": "password", "type": "password", "label": "Password"},
-    {"name": "trust_store", "type": "file", "label": "Trust Store", "filter": "Certificate Files (*.pem *.crt *.jks);;All Files (*)"},
+    {"name": "trust_store", "type": "file", "label": "Trust Store (optional)", "filter": "Certificate Files (*.pem *.crt *.jks);;All Files (*)"},
     {"name": "client_cert", "type": "file", "label": "Client Certificate", "filter": "Certificate Files (*.pem *.crt);;All Files (*)"},
     {"name": "client_key", "type": "file", "label": "Client Key", "filter": "Key Files (*.pem *.key);;All Files (*)"},
     {"name": "hints", "type": "readonly", "label": "Hints", "default": "TLS: 55443, Non-TLS: 55555. admin / admin, default / default, solace / solace"},
@@ -39,9 +40,13 @@ def authenticate(form_data):
     port = form_data.get('port', '').strip()
     vpn = form_data.get('vpn', '').strip()
     use_tls = form_data.get('use_tls', False)
+    verify_ssl = form_data.get('verify_ssl', False)
     auth_type = form_data.get('auth_type', 'Basic')
     username = form_data.get('username', '').strip()
     password = form_data.get('password', '')
+    trust_store = form_data.get('trust_store', '').strip()
+    client_cert = form_data.get('client_cert', '').strip()
+    client_key = form_data.get('client_key', '').strip()
     
     if not host:
         return False, "Host is required"
@@ -54,6 +59,7 @@ def authenticate(form_data):
     try:
         from solace.messaging.messaging_service import MessagingService
         from solace.messaging.config.retry_strategy import RetryStrategy
+        from solace.messaging.config.transport_security_strategy import TLS
         
         protocol = "tcps" if use_tls else "tcp"
         broker_props = {
@@ -64,11 +70,28 @@ def authenticate(form_data):
         if auth_type == "Basic":
             broker_props["solace.messaging.authentication.scheme.basic.username"] = username
             broker_props["solace.messaging.authentication.scheme.basic.password"] = password
+        elif auth_type == "Client Certificate":
+            if client_cert:
+                broker_props["solace.messaging.authentication.client-cert.file"] = client_cert
+            if client_key:
+                broker_props["solace.messaging.authentication.client-cert.private-key-file"] = client_key
         
-        messaging_service = MessagingService.builder().from_properties(broker_props)\
-            .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(0, 1))\
-            .build()
+        # Build the messaging service
+        builder = MessagingService.builder().from_properties(broker_props)\
+            .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(0, 1))
         
+        # Configure TLS settings
+        if use_tls:
+            if verify_ssl and trust_store:
+                # Use provided trust store with validation
+                tls_config = TLS.create().with_certificate_validation(True, True, trust_store)
+            else:
+                # Disable certificate validation - don't validate server cert
+                tls_config = TLS.create().with_certificate_validation(False, False)
+            
+            builder = builder.with_transport_security_strategy(tls_config)
+        
+        messaging_service = builder.build()
         messaging_service.connect()
         
         if messaging_service.is_connected:
@@ -81,7 +104,13 @@ def authenticate(form_data):
         # Fall back to TCP connection test
         pass
     except Exception as e:
-        return False, f"Solace authentication failed: {e}"
+        error_msg = str(e)
+        # If the SDK fails, try the fallback
+        if "trust" in error_msg.lower() or "certificate" in error_msg.lower() or "ssl" in error_msg.lower():
+            # Try fallback for SSL issues
+            pass
+        else:
+            return False, f"Solace authentication failed: {e}"
     
     # Fallback: basic TCP/TLS connection test
     try:
@@ -92,9 +121,14 @@ def authenticate(form_data):
         sock.settimeout(10)
         
         if use_tls:
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+            if verify_ssl:
+                context = ssl.create_default_context()
+                if trust_store:
+                    context.load_verify_locations(trust_store)
+            else:
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
             sock = context.wrap_socket(sock, server_hostname=host)
         
         sock.connect((host, int(port)))
