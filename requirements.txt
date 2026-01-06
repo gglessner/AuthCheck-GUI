@@ -1,0 +1,13 @@
+PySide6>=6.0.0
+
+# Optional dependencies for specific authentication modules:
+# pip install kafka-python        # Apache Kafka
+# pip install redis               # Redis
+# pip install pymqi               # IBM MQ (requires MQ client)
+# pip install oracledb            # Oracle Database
+# pip install ibm_db              # IBM DB2
+# pip install psycopg2-binary     # PostgreSQL
+# pip install mysql-connector-python  # MySQL/MariaDB
+# pip install ldap3               # LDAP/Active Directory
+# pip install paramiko            # SSH
+# pip install solace-pubsubplus   # Solace PubSub+
