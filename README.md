@@ -1,6 +1,6 @@
 # AuthCheck Module
 
-The `AuthCheck` module is a component of the **HACKtiveMQ Suite** and **ningu framework**, designed to test authentication against various systems including message brokers, databases, directory services, and more.
+The `AuthCheck` module is a component of the **ningu framework**, designed to test authentication against various systems including message brokers, databases, directory services, and more.
 
 ## Overview
 
