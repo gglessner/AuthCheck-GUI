@@ -1,13 +1,303 @@
+# Ningu Framework - AuthCheck Module Dependencies
+# ================================================
+# Install with: pip install -r requirements.txt
+#
+# Note: Some packages require additional system libraries or SDKs.
+# Optional packages are marked with comments - install as needed.
+
+# ===================
+# Core GUI Framework
+# ===================
 PySide6>=6.0.0
 
-# Optional dependencies for specific authentication modules:
-# pip install kafka-python        # Apache Kafka
-# pip install redis               # Redis
-# pip install pymqi               # IBM MQ (requires MQ client)
-# pip install oracledb            # Oracle Database
-# pip install ibm_db              # IBM DB2
-# pip install psycopg2-binary     # PostgreSQL
-# pip install mysql-connector-python  # MySQL/MariaDB
-# pip install ldap3               # LDAP/Active Directory
-# pip install paramiko            # SSH
-# pip install solace-pubsubplus   # Solace PubSub+
+# ===================
+# HTTP/REST Clients (used by most modules)
+# ===================
+requests>=2.28.0
+
+# ===================
+# Databases - Relational
+# ===================
+psycopg2-binary>=2.9.0          # PostgreSQL, Greenplum, Amazon Redshift, CockroachDB, TimescaleDB, YugabyteDB, Supabase
+mysql-connector-python>=8.0.0   # MySQL, TiDB, SingleStore, PlanetScale, Vitess
+oracledb>=1.0.0                 # Oracle Database
+pymssql>=2.2.0                  # Microsoft SQL Server, Sybase ASE
+# mariadb>=1.1.0                # MariaDB (optional, mysql-connector works too)
+# ibm_db>=3.0.0                 # IBM DB2 (requires IBM DB2 client libraries)
+teradatasql>=17.0.0             # Teradata
+vertica-python>=1.0.0           # Vertica
+snowflake-connector-python>=3.0.0  # Snowflake
+redshift-connector>=2.0.0       # Amazon Redshift (native)
+hdbcli>=2.0.0                   # SAP HANA
+clickhouse-connect>=0.6.0       # ClickHouse
+# pyexasol>=0.25.0              # Exasol (optional)
+# pynuodb>=2.5.0                # NuoDB (optional)
+
+# ===================
+# Databases - NoSQL & Document
+# ===================
+pymongo>=4.0.0                  # MongoDB, Amazon DocumentDB
+redis>=4.0.0                    # Redis
+elasticsearch>=8.0.0            # Elasticsearch
+cassandra-driver>=3.25.0        # Apache Cassandra, ScyllaDB
+couchdb>=1.2                    # CouchDB
+couchbase>=4.0.0                # Couchbase
+pymemcache>=4.0.0               # Memcached
+influxdb-client>=1.30.0         # InfluxDB 2.x
+# rethinkdb>=2.4.0              # RethinkDB (optional)
+# faunadb>=4.0.0                # FaunaDB (optional)
+# firebase-admin>=6.0.0         # Firebase (optional)
+
+# ===================
+# Databases - Graph
+# ===================
+neo4j>=5.0.0                    # Neo4j
+pyTigerGraph>=0.9.0             # TigerGraph
+# gremlinpython>=3.6.0          # Amazon Neptune, JanusGraph (Gremlin)
+# arango-python>=0.1.0          # ArangoDB (optional)
+
+# ===================
+# Databases - Vector (AI/ML)
+# ===================
+# pymilvus>=2.3.0               # Milvus (optional)
+# Most vector DBs use REST APIs via requests
+
+# ===================
+# Databases - Time Series
+# ===================
+# (QuestDB, TDengine, VictoriaMetrics use REST APIs)
+
+# ===================
+# Message Queues & Streaming
+# ===================
+kafka-python>=2.0.0             # Apache Kafka
+confluent-kafka>=2.0.0          # Apache Kafka (Confluent client)
+pika>=1.3.0                     # RabbitMQ (AMQP)
+stomp.py>=8.0.0                 # Apache ActiveMQ (STOMP)
+paho-mqtt>=1.6.0                # MQTT brokers, Zigbee2MQTT, EMQX, VerneMQ
+nats-py>=2.0.0                  # NATS
+pulsar-client>=3.0.0            # Apache Pulsar
+# solace-pubsubplus>=1.0.0      # Solace PubSub+ (install separately)
+# pymqi>=1.12.0                 # IBM MQ (requires IBM MQ client libraries)
+# qpid-proton>=0.38.0           # Apache Qpid (AMQP 1.0)
+# greenstalk>=2.0.0             # Beanstalkd (optional)
+
+# ===================
+# Big Data & Analytics
+# ===================
+kazoo>=2.9.0                    # Apache Zookeeper
+hdfs>=2.7.0                     # Apache Hadoop HDFS (WebHDFS)
+happybase>=1.2.0                # Apache HBase (Thrift)
+pyhive>=0.7.0                   # Apache Hive
+pysolr>=3.9.0                   # Apache Solr
+pydruid>=0.6.0                  # Apache Druid
+pyignite>=0.6.0                 # Apache Ignite
+# pyspark>=3.0.0                # Apache Spark (large dependency)
+# apache-flink>=1.0.0           # Apache Flink (large dependency)
+
+# ===================
+# Cloud Platforms - AWS
+# ===================
+boto3>=1.26.0                   # AWS (IAM, S3, RDS, DynamoDB, SQS, SNS, Lambda, EC2, EKS, CloudWatch, Secrets Manager, Kinesis, Glue, Neptune, Greengrass, IoT, API Gateway, etc.)
+
+# ===================
+# Cloud Platforms - Azure
+# ===================
+azure-identity>=1.12.0          # Azure AD authentication
+azure-keyvault-secrets>=4.6.0   # Azure Key Vault
+azure-storage-blob>=12.0.0      # Azure Blob Storage
+azure-cosmos>=4.5.0             # Azure Cosmos DB
+azure-servicebus>=7.0.0         # Azure Service Bus
+azure-eventhub>=5.0.0           # Azure Event Hubs
+azure-iot-hub>=2.6.0            # Azure IoT Hub, Azure IoT Edge
+# pyodbc>=4.0.0                 # Azure SQL (also needs ODBC Driver 17)
+
+# ===================
+# Cloud Platforms - Google Cloud
+# ===================
+google-cloud-storage>=2.0.0     # Google Cloud Storage
+google-cloud-bigquery>=3.0.0    # Google BigQuery
+google-cloud-pubsub>=2.0.0      # Google Cloud Pub/Sub
+google-auth>=2.0.0              # Google authentication, Google Drive
+# google-cloud-iot>=2.0.0       # Google Cloud IoT Core
+# google-cloud-spanner>=3.0.0   # Google Cloud Spanner (optional)
+
+# ===================
+# Identity & Access Management
+# ===================
+ldap3>=2.9.0                    # LDAP/Active Directory
+hvac>=1.1.0                     # HashiCorp Vault
+python-consul>=1.1.0            # HashiCorp Consul
+etcd3>=0.12.0                   # etcd
+# okta>=2.0.0                   # Okta (optional, REST API used)
+# boxsdk[jwt]>=3.0.0            # Box (for JWT auth)
+
+# ===================
+# Container & Orchestration
+# ===================
+kubernetes>=26.0.0              # Kubernetes, Istio, Linkerd
+docker>=6.0.0                   # Docker, Docker Swarm
+# openshift>=0.13.0             # OpenShift (optional)
+# python-nomad>=2.0.0           # HashiCorp Nomad (optional)
+# proxmoxer>=2.0.0              # Proxmox VE (optional)
+
+# ===================
+# Remote Access & File Transfer
+# ===================
+paramiko>=3.0.0                 # SSH/SFTP, Juniper Networks, Avaya CM, QNX
+smbprotocol>=1.10.0             # SMB/CIFS file shares
+
+# ===================
+# Network Management
+# ===================
+pysnmp>=4.4.0                   # SNMP v1/v2c/v3
+
+# ===================
+# Industrial Control Systems (ICS/SCADA)
+# ===================
+pymodbus>=3.0.0                 # Modbus TCP/RTU
+# opcua>=0.98.0                 # OPC UA (optional)
+# python-snap7>=1.3             # Siemens S7 PLC (optional)
+# pylogix>=0.8.0                # Allen-Bradley PLC (optional)
+# BAC0>=22.0.0                  # BACnet (optional)
+# cpppo>=4.0.0                  # EtherNet/IP (optional)
+
+# ===================
+# Healthcare Systems
+# ===================
+# pynetdicom>=2.0.0             # DICOM medical imaging (optional)
+# hl7apy>=1.3.0                 # HL7 v2 messages (optional)
+
+# ===================
+# Financial Trading & Payments
+# ===================
+# blpapi>=3.19.0                # Bloomberg API (requires Bloomberg SDK)
+braintree>=4.0.0                # Braintree/PayPal payment gateway
+
+# ===================
+# Mainframe
+# ===================
+# py3270>=0.3.0                 # TN3270 for TSO/CICS/VTAM (optional)
+
+# ===================
+# Media Servers
+# ===================
+plexapi>=4.13.0                 # Plex Media Server
+
+# ===================
+# Gaming Platforms
+# ===================
+# psnawp-api>=1.0.0             # PlayStation Network (optional)
+
+# ===================
+# IoT Protocols
+# ===================
+# aiocoap>=0.4.0                # CoAP protocol (optional)
+
+# ===================
+# Virtualization
+# ===================
+pyvmomi>=8.0.0                  # VMware vSphere/ESXi
+
+# ===================
+# Monitoring & Observability
+# ===================
+# (Most use REST APIs via requests package)
+
+# ===================
+# Storage Systems
+# ===================
+minio>=7.1.0                    # MinIO S3-compatible storage
+
+# ===================
+# Key-Value Stores
+# ===================
+# aerospike>=11.0.0             # Aerospike (optional, requires C client)
+
+# ===================
+# BMC / Server Management
+# ===================
+# (Dell iDRAC, HP iLO, Supermicro, Lenovo XCC all use REST/Redfish APIs via requests)
+
+# ===================
+# NAS Devices
+# ===================
+# (Synology, QNAP, TrueNAS, Asustor, WD all use REST APIs via requests)
+
+# ===================
+# VPN / Remote Access
+# ===================
+# (OpenVPN, WireGuard, Cisco ASA, SonicWall, Pulse Secure, GlobalProtect, AnyConnect all use REST/Web APIs via requests)
+
+# ===================
+# Physical Access Control
+# ===================
+# (Lenel OnGuard, S2 NetBox, HID VertX, Gallagher CC all use REST APIs via requests)
+
+# ===================
+# Building Management Systems
+# ===================
+# (Honeywell EBI, Tridium Niagara, Siemens Desigo CC all use REST/Web APIs via requests)
+
+# ===================
+# KVM / Out-of-Band Management
+# ===================
+# (Raritan, Avocent, ATEN all use REST/Web APIs via requests)
+
+# ===================
+# PDU / Power Management
+# ===================
+# (APC, Raritan, Eaton, CyberPower all use REST/Web APIs via requests)
+
+# ===================
+# Console Servers
+# ===================
+# (Digi, Opengear, Lantronix all use REST APIs via requests)
+
+# ===================
+# Printers
+# ===================
+# (HP, Xerox, Canon, Ricoh, Konica Minolta, Brother, Epson, Lexmark, Kyocera, Sharp, Zebra, Toshiba, OKI all use REST/Web APIs via requests)
+
+# ===================
+# Optional - Requires External SDKs/Libraries
+# ===================
+# The following packages require external SDK installations:
+#
+# pyrfc>=3.0.0                  # SAP RFC (requires SAP NW RFC SDK)
+# ibm_db>=3.0.0                 # IBM DB2 (requires IBM DB2 client)
+# pymqi>=1.12.0                 # IBM MQ (requires IBM MQ client)
+# cx_Oracle>=8.0.0              # Oracle (legacy, use oracledb instead)
+# pyodbc>=4.0.0                 # ODBC databases (requires ODBC drivers)
+# aerospike>=11.0.0             # Aerospike (requires C client libraries)
+# ovirt-engine-sdk-python>=4.5.0  # oVirt/RHEV (optional)
+# XenAPI>=2.14                  # Citrix Hypervisor/XenServer (optional)
+
+# ===================
+# ERP & Business Systems
+# ===================
+requests-oauthlib>=1.3.0        # NetSuite TBA, OAuth1 clients
+requests-ntlm>=1.2.0            # SharePoint on-prem, Windows auth
+
+# ===================
+# Video Surveillance
+# ===================
+# onvif-zeep>=0.2.0             # ONVIF cameras (optional)
+
+# ===================
+# E-commerce Platforms
+# ===================
+# shopify>=12.0.0               # Shopify (optional, REST API works)
+# woocommerce>=3.0.0            # WooCommerce (optional, REST API works)
+
+# ===================
+# Accounting Software
+# ===================
+# quickbooks-python>=0.2.0      # QuickBooks (optional, OAuth2 via requests)
+
+# ===================
+# Development & Testing
+# ===================
+# pytest>=7.0.0
+# black>=23.0.0
+# flake8>=6.0.0
