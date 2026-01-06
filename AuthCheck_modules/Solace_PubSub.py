@@ -16,14 +16,28 @@ form_fields = [
     {"name": "use_tls", "type": "checkbox", "label": "Enable TLS", "default": True},
     {"name": "verify_ssl", "type": "checkbox", "label": "Verify SSL Certificate"},
     {"name": "auth_type", "type": "combo", "label": "Authentication Type",
-     "options": ["Basic", "Client Certificate", "Kerberos", "OAuth"]},
+     "options": ["Basic", "Client Certificate"]},
     {"name": "username", "type": "text", "label": "Username"},
     {"name": "password", "type": "password", "label": "Password"},
-    {"name": "trust_store", "type": "file", "label": "Trust Store (optional)", "filter": "Certificate Files (*.pem *.crt *.jks);;All Files (*)"},
+    {"name": "trust_store", "type": "file", "label": "Trust Store (optional)", "filter": "Certificate Files (*.pem *.crt);;All Files (*)"},
     {"name": "client_cert", "type": "file", "label": "Client Certificate", "filter": "Certificate Files (*.pem *.crt);;All Files (*)"},
     {"name": "client_key", "type": "file", "label": "Client Key", "filter": "Key Files (*.pem *.key);;All Files (*)"},
-    {"name": "hints", "type": "readonly", "label": "Hints", "default": "TLS: 55443, Non-TLS: 55555. admin / admin, default / default, solace / solace"},
+    {"name": "hints", "type": "readonly", "label": "Hints", "default": "TLS: 55443, Non-TLS: 55555. admin / admin, default / default"},
 ]
+
+
+# Check if solace SDK is available at module load time
+SOLACE_SDK_AVAILABLE = False
+SOLACE_SDK_ERROR = None
+
+try:
+    from solace.messaging.messaging_service import MessagingService
+    from solace.messaging.config.retry_strategy import RetryStrategy
+    SOLACE_SDK_AVAILABLE = True
+except ImportError as e:
+    SOLACE_SDK_ERROR = str(e)
+except Exception as e:
+    SOLACE_SDK_ERROR = str(e)
 
 
 def authenticate(form_data):
@@ -55,86 +69,100 @@ def authenticate(form_data):
     if not vpn:
         return False, "Message VPN is required"
     
-    # Try using solace-pubsubplus if available
-    try:
-        from solace.messaging.messaging_service import MessagingService
-        from solace.messaging.config.retry_strategy import RetryStrategy
-        from solace.messaging.config.transport_security_strategy import TLS
-        
-        protocol = "tcps" if use_tls else "tcp"
-        broker_props = {
-            "solace.messaging.transport.host": f"{protocol}://{host}:{port}",
-            "solace.messaging.service.vpn-name": vpn,
-        }
-        
-        if auth_type == "Basic":
-            broker_props["solace.messaging.authentication.scheme.basic.username"] = username
-            broker_props["solace.messaging.authentication.scheme.basic.password"] = password
-        elif auth_type == "Client Certificate":
-            if client_cert:
-                broker_props["solace.messaging.authentication.client-cert.file"] = client_cert
-            if client_key:
-                broker_props["solace.messaging.authentication.client-cert.private-key-file"] = client_key
-        
-        # Build the messaging service
-        builder = MessagingService.builder().from_properties(broker_props)\
-            .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(0, 1))
-        
-        # Configure TLS settings
-        if use_tls:
-            if verify_ssl and trust_store:
-                # Use provided trust store with validation
-                tls_config = TLS.create().with_certificate_validation(True, True, trust_store)
+    # Use Solace SDK if available
+    if SOLACE_SDK_AVAILABLE:
+        try:
+            protocol = "tcps" if use_tls else "tcp"
+            broker_props = {
+                "solace.messaging.transport.host": f"{protocol}://{host}:{port}",
+                "solace.messaging.service.vpn-name": vpn,
+            }
+            
+            if auth_type == "Basic":
+                if not username:
+                    return False, "Username is required for Basic authentication"
+                broker_props["solace.messaging.authentication.scheme.basic.username"] = username
+                broker_props["solace.messaging.authentication.scheme.basic.password"] = password
+            elif auth_type == "Client Certificate":
+                broker_props["solace.messaging.authentication.scheme"] = "AUTHENTICATION_SCHEME_CLIENT_CERTIFICATE"
+                if client_cert:
+                    broker_props["solace.messaging.authentication.client-cert.file"] = client_cert
+                if client_key:
+                    broker_props["solace.messaging.authentication.client-cert.private-key-file"] = client_key
+            
+            # TLS settings
+            if use_tls:
+                if not verify_ssl:
+                    # Disable server certificate validation
+                    broker_props["solace.messaging.tls.cert-validated"] = False
+                    broker_props["solace.messaging.tls.cert-validated-date"] = False
+                else:
+                    broker_props["solace.messaging.tls.cert-validated"] = True
+                    if trust_store:
+                        broker_props["solace.messaging.tls.trust-store-path"] = trust_store
+            
+            # Build and connect
+            messaging_service = MessagingService.builder()\
+                .from_properties(broker_props)\
+                .with_reconnection_retry_strategy(RetryStrategy.parametrized_retry(0, 1))\
+                .build()
+            
+            messaging_service.connect()
+            
+            if messaging_service.is_connected:
+                messaging_service.disconnect()
+                return True, f"Successfully authenticated to Solace broker at {host}:{port} (VPN: {vpn}, User: {username})"
             else:
-                # Disable certificate validation - don't validate server cert
-                tls_config = TLS.create().with_certificate_validation(False, False)
-            
-            builder = builder.with_transport_security_strategy(tls_config)
-        
-        messaging_service = builder.build()
-        messaging_service.connect()
-        
-        if messaging_service.is_connected:
-            messaging_service.disconnect()
-            return True, f"Successfully authenticated to Solace broker at {host}:{port} (VPN: {vpn})"
-        else:
-            return False, "Connection established but not authenticated"
-            
-    except ImportError:
-        # Fall back to TCP connection test
-        pass
-    except Exception as e:
-        error_msg = str(e)
-        # If the SDK fails, try the fallback
-        if "trust" in error_msg.lower() or "certificate" in error_msg.lower() or "ssl" in error_msg.lower():
-            # Try fallback for SSL issues
-            pass
-        else:
-            return False, f"Solace authentication failed: {e}"
+                return False, "Connection failed - not authenticated"
+                
+        except Exception as e:
+            error_msg = str(e)
+            # Parse common Solace errors
+            if "authentication" in error_msg.lower() or "unauthorized" in error_msg.lower():
+                return False, f"Authentication failed: Invalid credentials"
+            elif "timeout" in error_msg.lower():
+                return False, f"Connection timeout to {host}:{port}"
+            elif "refused" in error_msg.lower():
+                return False, f"Connection refused by {host}:{port}"
+            elif "certificate" in error_msg.lower() or "ssl" in error_msg.lower() or "tls" in error_msg.lower():
+                return False, f"TLS/SSL error: {error_msg}"
+            else:
+                return False, f"Solace error: {error_msg}"
     
-    # Fallback: basic TCP/TLS connection test
+    # SDK not available - try SEMP REST API as alternative
     try:
-        import socket
-        import ssl
+        import requests
         
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
+        # Try SEMP management API (typically on port 8080 or 943)
+        semp_ports = ["8080", "943", "80"]
         
-        if use_tls:
-            if verify_ssl:
-                context = ssl.create_default_context()
-                if trust_store:
-                    context.load_verify_locations(trust_store)
-            else:
-                context = ssl.create_default_context()
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
-            sock = context.wrap_socket(sock, server_hostname=host)
+        for semp_port in semp_ports:
+            try:
+                scheme = "https" if use_tls else "http"
+                semp_url = f"{scheme}://{host}:{semp_port}/SEMP/v2/config/msgVpns/{vpn}"
+                
+                response = requests.get(
+                    semp_url,
+                    auth=(username, password),
+                    timeout=10,
+                    verify=verify_ssl if use_tls else True
+                )
+                
+                if response.status_code == 200:
+                    return True, f"Successfully authenticated via SEMP API at {host}:{semp_port} (VPN: {vpn})"
+                elif response.status_code == 401:
+                    return False, "Authentication failed: Invalid credentials"
+                elif response.status_code == 403:
+                    return False, "Authentication failed: Access forbidden"
+                    
+            except requests.exceptions.ConnectionError:
+                continue
+            except requests.exceptions.Timeout:
+                continue
         
-        sock.connect((host, int(port)))
-        sock.close()
+        return False, f"solace-pubsubplus SDK not installed ({SOLACE_SDK_ERROR}). SEMP API also not reachable. Install with: pip install solace-pubsubplus"
         
-        return True, f"TCP{'S' if use_tls else ''} connection successful to {host}:{port} (Note: solace-pubsubplus package not installed for full auth test)"
-        
+    except ImportError:
+        return False, f"solace-pubsubplus SDK not installed ({SOLACE_SDK_ERROR}). Install with: pip install solace-pubsubplus"
     except Exception as e:
-        return False, f"Connection failed: {e}"
+        return False, f"Error: {e}. solace-pubsubplus SDK error: {SOLACE_SDK_ERROR}"

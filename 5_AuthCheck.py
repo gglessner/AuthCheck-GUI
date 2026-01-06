@@ -389,12 +389,17 @@ class TabContent(QWidget):
                 widget._line_edit = line_edit
                 
             elif field_type == 'readonly':
-                widget = QLineEdit()
+                widget = QPlainTextEdit()
                 widget.setMinimumWidth(field_min_width)
                 widget.setReadOnly(True)
                 widget.setStyleSheet("background-color: #f0f0f0; color: #666666;")
+                # Set a reasonable height for hints (about 5 lines)
+                widget.setMaximumHeight(110)
+                widget.setMinimumHeight(50)
+                # Enable word wrap
+                widget.setLineWrapMode(QPlainTextEdit.WidgetWidth)
                 if field_default:
-                    widget.setText(str(field_default))
+                    widget.setPlainText(str(field_default))
                 
             else:
                 # Default to text
